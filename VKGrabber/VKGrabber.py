@@ -80,10 +80,11 @@ def save_data(data, path, name):
 def save_photos(photos_list, path):
     """ Сохранение фото по ссылкам """
 
+    print("{} saving...".format(path))
     for link in photos_list:
         with open(path + link[-10:], "wb") as file_:
             file_.write(requests.get(link).content)
-        print("{} was saved!".format(path))
+    print("{} was saved!".format(path))
 
 
 VK = VK(log_in_vk())
@@ -93,6 +94,7 @@ MULTIPLIER = 0
 IDES = []  # id будущих диалогов
 # размер фото
 SIZE = "photo_130"  # photo_604/photo_130 - для быстрой загрузки
+SIZE_LINKS = "photo_604"  # ссылки на фото в хорошем качестве
 
 print("User: ", USER_INFO)
 print("Count of dialogs: ", DIALOGS_COUNT)
@@ -121,9 +123,9 @@ try:
 except FileExistsError:
     pass
 
-# TODO: расширить максимум вложений выгружаемых из диалога (сейчас вроде 200)
+# TODO: расширить максимум вложений выгружаемых из диалога (сейчас вроде 200 на диалог)
 # получаем ссылки
-for id_ in IDES:
+for id_ in IDES[:3]:
     sleep(1)
     # создаем директорию диалога и переходим в нее
     companion = get_user_info(id_)  # данные собеседника
@@ -143,23 +145,26 @@ for id_ in IDES:
         print(e)
 
     # список отправленных изображений
-    # TODO сделать итератор может?
-    sent = [x["attachment"]["photo"][SIZE] for x in dialog_links if x["attachment"]["photo"]["owner_id"] != id_]
+    sent_links = [x["attachment"]["photo"][SIZE_LINKS] for x in dialog_links if
+                  x["attachment"]["photo"]["owner_id"] != id_]
+    sent = (x["attachment"]["photo"][SIZE] for x in dialog_links if x["attachment"]["photo"]["owner_id"] != id_)
     dir_sent = "{}/Sent/".format(dir_dialog)
     try:
         os.mkdir(dir_sent)
     except FileExistsError:
         pass
-    save_data(sent, dir_sent, "sent.txt")
-    save_photos(sent, dir_sent)  # сохраняем исходящие фото в потоке
+    save_data(sent_links, dir_sent, "SentLinks.txt")
+    save_photos(sent, dir_sent)  # сохраняем исходящие фото в другом потоке
 
     # список полученных изображений
-    received = [x["attachment"]["photo"][SIZE] for x in dialog_links if x["attachment"]["photo"]["owner_id"] == id_]
+    received_links = [x["attachment"]["photo"][SIZE_LINKS] for x in dialog_links if
+                      x["attachment"]["photo"]["owner_id"] == id_]
+    received = (x["attachment"]["photo"][SIZE] for x in dialog_links if x["attachment"]["photo"]["owner_id"] == id_)
     dir_received = "{}/Received/".format(dir_dialog)
     try:
         os.mkdir(dir_received)
     except FileExistsError:
         pass
-    save_data(received, dir_received, "received.txt")
-    save_photos(received, dir_received)  # сохраняем входящие фото в потоке
+    save_data(received_links, dir_received, "ReceivedLinks.txt")
+    save_photos(received, dir_received)  # сохраняем входящие фото в другом потоке
     sleep(1)
