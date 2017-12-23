@@ -1,0 +1,3 @@
+""" Keys for VK """
+
+APP_ID = .....
