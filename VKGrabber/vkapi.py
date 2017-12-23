@@ -4,8 +4,10 @@
 import random
 import requests
 
-class VK():
+
+class VK:
     """ VK API methods """
+
     def __init__(self, token):
         self.token = token
 

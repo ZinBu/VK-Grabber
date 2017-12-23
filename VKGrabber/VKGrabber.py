@@ -9,6 +9,7 @@ from time import sleep
 import requests
 import vk  # external lib
 from vkapi import VK
+from keys import APP_ID
 
 
 def thread(func):
@@ -28,7 +29,7 @@ def log_in_vk():
     """ Open file token or login and create a token """
 
     scope = "friends,photos,audio,video,docs,notes,pages,status,wall,groups,messages,notifications,offline"
-    app_id = 5377227
+    app_id = APP_ID
 
     try:
         with open("Token", "r") as memory:
@@ -123,9 +124,8 @@ try:
 except FileExistsError:
     pass
 
-# TODO: расширить максимум вложений выгружаемых из диалога (сейчас вроде 200 на диалог)
 # получаем ссылки
-for id_ in IDES[:3]:
+for id_ in IDES[:2]:
     sleep(1)
     # создаем директорию диалога и переходим в нее
     companion = get_user_info(id_)  # данные собеседника
@@ -136,13 +136,30 @@ for id_ in IDES[:3]:
         pass
 
     try:
-        dialog_links = VK.api("messages.getHistoryAttachments",
-                              count=0,
-                              peer_id=id_,
-                              media_type="photo")["response"]["items"]
+        dialog_portion = VK.api("messages.getHistoryAttachments",
+                                count=0,
+                                peer_id=id_,
+                                media_type="photo")["response"]
+        dialog_links = dialog_portion["items"]  # делаем общаг ссылок
+        next_point = dialog_portion["next_from"]  # номер начала следующей порции вложений
+
+        while True:
+            sleep(0.5)
+            # получение 200 или менее ссылок на вложения
+            dialog_portion = VK.api("messages.getHistoryAttachments",
+                                    count=0,
+                                    start_from=next_point,
+                                    peer_id=id_,
+                                    media_type="photo")["response"]
+            # если диалог не пустой
+            if dialog_portion["items"]:
+                dialog_links.extend(dialog_portion["items"])  # добавляем что есть в общаг ссылок
+                next_point = dialog_portion["next_from"]  # номер начала следующей порции вложений
+            else:
+                break
 
     except Exception as e:
-        print(e)
+        print("Error in dialog link creation", e)
 
     # список отправленных изображений
     sent_links = [x["attachment"]["photo"][SIZE_LINKS] for x in dialog_links if
