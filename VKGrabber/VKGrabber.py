@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Brings all photos from dialogs of user """
+""" Сохранение всех вложений из всех диалогов """
 
 import math
 import os
@@ -13,7 +13,7 @@ from keys import APP_ID
 
 
 def thread(func):
-    """ Run in thread """
+    """ Запуск функции в потоке """
 
     def run(*args, **kwargs):
         """ Threading """
@@ -26,7 +26,7 @@ def thread(func):
 
 
 def log_in_vk():
-    """ Open file token or login and create a token """
+    """ Открывает файл с токеном или осуществляет вход по логину """
 
     scope = "friends,photos,audio,video,docs,notes,pages,status,wall,groups,messages,notifications,offline"
     app_id = APP_ID
